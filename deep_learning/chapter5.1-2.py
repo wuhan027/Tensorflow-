@@ -75,8 +75,8 @@ def update_parameters(parameters, gradients, lr):
     parameters['by']  += -lr * gradients['dby']
     return parameters
 
-def rnn_forward(X, Y, a0, parameters, vocab_size = 27):
 
+def rnn_forward(X, Y, a0, parameters, vocab_size = 27):
     # Initialize x, a and y_hat as empty dictionaries
     x, a, y_hat = {}, {}, {}
 
@@ -190,7 +190,7 @@ def sample(parameters, char_to_ix, seed):
 
         # for grading purposes
         seed += 1
-        counter +=1
+        counter += 1
 
     ### END CODE HERE ###
 
@@ -198,17 +198,90 @@ def sample(parameters, char_to_ix, seed):
         indices.append(char_to_ix['\n'])
 
     return indices
-np.random.seed(2)
-_, n_a = 20, 100
-vocab_size=27
-Wax, Waa, Wya = np.random.randn(n_a, vocab_size), np.random.randn(n_a, n_a), np.random.randn(vocab_size, n_a)
-b, by = np.random.randn(n_a, 1), np.random.randn(vocab_size, 1)
-parameters = {"Wax": Wax, "Waa": Waa, "Wya": Wya, "b": b, "by": by}
-ix_to_char = {0: '\n', 1: 'a', 2: 'b', 3: 'c', 4: 'd', 5: 'e', 6: 'f', 7: 'g', 8: 'h', 9: 'i', 10: 'j', 11: 'k', 12: 'l', 13: 'm', 14: 'n', 15: 'o', 16: 'p', 17: 'q', 18: 'r', 19: 's', 20: 't', 21: 'u', 22: 'v', 23: 'w', 24: 'x', 25: 'y', 26: 'z'}
-char_to_ix = {}
-for _k in ix_to_char:
-    char_to_ix[ix_to_char[_k]] = _k
-indices = sample(parameters, char_to_ix, 0)
-print("Sampling:")
-print("list of sampled indices:", indices)
-print("list of sampled characters:", [ix_to_char[i] for i in indices])
+
+
+def test_sample():
+    np.random.seed(2)
+    _, n_a = 20, 100
+    vocab_size=27
+    Wax, Waa, Wya = np.random.randn(n_a, vocab_size), np.random.randn(n_a, n_a), np.random.randn(vocab_size, n_a)
+    b, by = np.random.randn(n_a, 1), np.random.randn(vocab_size, 1)
+    parameters = {"Wax": Wax, "Waa": Waa, "Wya": Wya, "b": b, "by": by}
+    ix_to_char = {0: '\n', 1: 'a', 2: 'b', 3: 'c', 4: 'd', 5: 'e', 6: 'f', 7: 'g', 8: 'h', 9: 'i', 10: 'j', 11: 'k', 12: 'l', 13: 'm', 14: 'n', 15: 'o', 16: 'p', 17: 'q', 18: 'r', 19: 's', 20: 't', 21: 'u', 22: 'v', 23: 'w', 24: 'x', 25: 'y', 26: 'z'}
+    char_to_ix = {}
+    for _k in ix_to_char:
+        char_to_ix[ix_to_char[_k]] = _k
+    indices = sample(parameters, char_to_ix, 0)
+    print("Sampling:")
+    print("list of sampled indices:", indices)
+    print("list of sampled characters:", [ix_to_char[i] for i in indices])
+
+
+# 3 - Building the language model
+# 3.1 - Gradient descent
+
+# GRADED FUNCTION: optimize
+def optimize(X, Y, a_prev, parameters, learning_rate = 0.01):
+    """
+    Execute one step of the optimization to train the model.
+
+    Arguments:
+    X -- list of integers, where each integer is a number that maps to a character in the vocabulary.
+    Y -- list of integers, exactly the same as X but shifted one index to the left.
+    a_prev -- previous hidden state.
+    parameters -- python dictionary containing:
+                        Wax -- Weight matrix multiplying the input, numpy array of shape (n_a, n_x)
+                        Waa -- Weight matrix multiplying the hidden state, numpy array of shape (n_a, n_a)
+                        Wya -- Weight matrix relating the hidden-state to the output, numpy array of shape (n_y, n_a)
+                        b --  Bias, numpy array of shape (n_a, 1)
+                        by -- Bias relating the hidden-state to the output, numpy array of shape (n_y, 1)
+    learning_rate -- learning rate for the model.
+
+    Returns:
+    loss -- value of the loss function (cross-entropy)
+    gradients -- python dictionary containing:
+                        dWax -- Gradients of input-to-hidden weights, of shape (n_a, n_x)
+                        dWaa -- Gradients of hidden-to-hidden weights, of shape (n_a, n_a)
+                        dWya -- Gradients of hidden-to-output weights, of shape (n_y, n_a)
+                        db -- Gradients of bias vector, of shape (n_a, 1)
+                        dby -- Gradients of output bias vector, of shape (n_y, 1)
+    a[len(X)-1] -- the last hidden state, of shape (n_a, 1)
+    """
+
+    ### START CODE HERE ###
+
+    # Forward propagate through time (≈1 line)
+    loss, cache = rnn_forward(X, Y, a_prev, parameters)
+
+    # Backpropagate through time (≈1 line)
+    gradients, a = rnn_backward(X, Y, parameters, cache)
+
+    # Clip your gradients between -5 (min) and 5 (max) (≈1 line)
+    gradients = clip(gradients, 5)
+
+    # Update parameters (≈1 line)
+    parameters = update_parameters(parameters, gradients, learning_rate)
+
+    ### END CODE HERE ###
+
+    return loss, gradients, a[len(X)-1]
+
+
+def test_():
+    np.random.seed(1)
+    vocab_size, n_a = 27, 100
+    a_prev = np.random.randn(n_a, 1)
+    Wax, Waa, Wya = np.random.randn(n_a, vocab_size), np.random.randn(n_a, n_a), np.random.randn(vocab_size, n_a)
+    b, by = np.random.randn(n_a, 1), np.random.randn(vocab_size, 1)
+    parameters = {"Wax": Wax, "Waa": Waa, "Wya": Wya, "b": b, "by": by}
+    X = [12, 3, 5, 11, 22, 3]
+    Y = [4, 14, 11, 22, 25, 26]
+
+    loss, gradients, a_last = optimize(X, Y, a_prev, parameters, learning_rate=0.01)
+    print("Loss =", loss)
+    print("gradients[\"dWaa\"][1][2] =", gradients["dWaa"][1][2])
+    print("np.argmax(gradients[\"dWax\"]) =", np.argmax(gradients["dWax"]))
+    print("gradients[\"dWya\"][1][2] =", gradients["dWya"][1][2])
+    print("gradients[\"db\"][4] =", gradients["db"][4])
+    print("gradients[\"dby\"][1] =", gradients["dby"][1])
+    print("a_last[4] =", a_last[4])
