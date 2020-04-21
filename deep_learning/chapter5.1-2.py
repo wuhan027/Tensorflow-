@@ -43,6 +43,7 @@ def initialize_parameters(n_a, n_x, n_y):
 
     return parameters
 
+
 def rnn_step_forward(parameters, a_prev, x):
 
     Waa, Wax, Wya, by, b = parameters['Waa'], parameters['Wax'], parameters['Wya'], parameters['by'], parameters['b']
@@ -50,6 +51,7 @@ def rnn_step_forward(parameters, a_prev, x):
     p_t = softmax(np.dot(Wya, a_next) + by) # unnormalized log probabilities for next chars # probabilities for next chars
 
     return a_next, p_t
+
 
 def rnn_step_backward(dy, gradients, parameters, x, a, a_prev):
 
@@ -62,6 +64,7 @@ def rnn_step_backward(dy, gradients, parameters, x, a, a_prev):
     gradients['dWaa'] += np.dot(daraw, a_prev.T)
     gradients['da_next'] = np.dot(parameters['Waa'].T, daraw)
     return gradients
+
 
 def update_parameters(parameters, gradients, lr):
 
