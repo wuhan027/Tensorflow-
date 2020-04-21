@@ -165,7 +165,7 @@ def sample(parameters, char_to_ix, seed):
     counter = 0
     newline_character = char_to_ix['\n']
 
-    while (idx != newline_character and counter != 50):
+    while idx != newline_character and counter != 50:
         # Step 2: Forward propagate x using the equations (1), (2) and (3)
         a = np.tanh(np.dot(Wax, x) + np.dot(Waa, a_prev) + b)
         z = np.dot(Wya, a) + by
