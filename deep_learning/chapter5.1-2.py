@@ -1,3 +1,6 @@
+#utf-8
+# https://blog.csdn.net/Koala_Tree/article/details/79451236
+
 import numpy as np
 
 
@@ -219,7 +222,6 @@ def sample(parameters, char_to_ix, seed):
         a = np.tanh(np.dot(Wax, x) + np.dot(Waa, a_prev) + b)
         z = np.dot(Wya, a) + by
         y = softmax(z)
-        print('a=', a.shape, '\tz=', z.shape, '\ty=', y.shape)
 
         # for grading purposes
         np.random.seed(counter+seed)
@@ -366,7 +368,7 @@ def model(data, ix_to_char, char_to_ix, num_iterations = 35000, n_a = 50, dino_n
     loss = get_initial_loss(vocab_size, dino_names)
 
     # Build list of all dinosaur names (training examples).
-    with open("dinos.txt") as f:
+    with open("data/dinos.txt") as f:
         examples = f.readlines()
     examples = [x.lower().strip() for x in examples]
 
@@ -416,8 +418,10 @@ def model(data, ix_to_char, char_to_ix, num_iterations = 35000, n_a = 50, dino_n
     return parameters
 
 
-# data = open('dinos.txt', 'r').read()
-# data= data.lower()
-# chars = list(set(data))
-# data_size, vocab_size = len(data), len(chars)
-# parameters = model(data, ix_to_char, char_to_ix)
+data = open('data/dinos.txt', 'r').read()
+data = data.lower()
+chars = list(set(data))
+data_size, vocab_size = len(data), len(chars)
+char_to_ix = {ch: i for i, ch in enumerate(sorted(chars))}
+ix_to_char = {i: ch for i, ch in enumerate(sorted(chars))}
+parameters = model(data, ix_to_char, char_to_ix)
