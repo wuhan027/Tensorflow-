@@ -5,20 +5,25 @@ def softmax(x):
     e_x = np.exp(x - np.max(x))
     return e_x / e_x.sum(axis=0)
 
+
 def smooth(loss, cur_loss):
     return loss * 0.999 + cur_loss * 0.001
+
 
 def print_sample(sample_ix, ix_to_char):
     txt = ''.join(ix_to_char[ix] for ix in sample_ix)
     txt = txt[0].upper() + txt[1:]  # capitalize first character
     print ('%s' % (txt, ), end='')
 
+
 def get_initial_loss(vocab_size, seq_length):
     return -np.log(1.0/vocab_size)*seq_length
+
 
 def softmax(x):
     e_x = np.exp(x - np.max(x))
     return e_x / e_x.sum(axis=0)
+
 
 def initialize_parameters(n_a, n_x, n_y):
     """
@@ -54,7 +59,6 @@ def rnn_step_forward(parameters, a_prev, x):
 
 
 def rnn_step_backward(dy, gradients, parameters, x, a, a_prev):
-
     gradients['dWya'] += np.dot(dy, a.T)
     gradients['dby'] += dy
     da = np.dot(parameters['Wya'].T, dy) + gradients['da_next'] # backprop into h
@@ -127,8 +131,53 @@ def rnn_backward(X, Y, parameters, cache):
 
     return gradients, a
 
+#%%
+# 2 - Building blocks of the model
+# 2.1 - Clipping the gradients in the optimization loop
 
-# GRADED FUNCTION: sample
+
+def clip(gradients, maxValue):
+    '''
+    Clips the gradients' values between minimum and maximum.
+
+    Arguments:
+    gradients -- a dictionary containing the gradients "dWaa", "dWax", "dWya", "db", "dby"
+    maxValue -- everything above this number is set to this number, and everything less than -maxValue is set to -maxValue
+
+    Returns:
+    gradients -- a dictionary with the clipped gradients.
+    '''
+
+    dWaa, dWax, dWya, db, dby = gradients['dWaa'], gradients['dWax'], gradients['dWya'], gradients['db'], gradients['dby']
+
+    ### START CODE HERE ###
+    # clip to mitigate exploding gradients, loop over [dWax, dWaa, dWya, db, dby]. (≈2 lines)
+    for gradient in [dWax, dWaa, dWya, db, dby]:
+        np.clip(gradient, -maxValue, maxValue, out=gradient)
+    ### END CODE HERE ###
+
+    gradients = {"dWaa": dWaa, "dWax": dWax, "dWya": dWya, "db": db, "dby": dby}
+
+    return gradients
+
+
+def test_clip():
+    np.random.seed(3)
+    dWax = np.random.randn(5, 3) * 10
+    dWaa = np.random.randn(5, 5) * 10
+    dWya = np.random.randn(2, 5) * 10
+    db = np.random.randn(5, 1) * 10
+    dby = np.random.randn(2, 1) * 10
+    gradients = {"dWax": dWax, "dWaa": dWaa, "dWya": dWya, "db": db, "dby": dby}
+    gradients = clip(gradients, 10)
+    print("gradients[\"dWaa\"][1][2] =", gradients["dWaa"][1][2])
+    print("gradients[\"dWax\"][3][1] =", gradients["dWax"][3][1])
+    print("gradients[\"dWya\"][1][2] =", gradients["dWya"][1][2])
+    print("gradients[\"db\"][4] =", gradients["db"][4])
+    print("gradients[\"dby\"][1] =", gradients["dby"][1])
+
+
+#%% 2.2 - Sampling
 def sample(parameters, char_to_ix, seed):
     """
     Sample a sequence of characters according to a sequence of probability distributions output of the RNN
@@ -217,7 +266,7 @@ def test_sample():
     print("list of sampled characters:", [ix_to_char[i] for i in indices])
 
 
-# 3 - Building the language model
+#%% 3 - Building the language model
 # 3.1 - Gradient descent
 
 # GRADED FUNCTION: optimize
@@ -267,7 +316,7 @@ def optimize(X, Y, a_prev, parameters, learning_rate = 0.01):
     return loss, gradients, a[len(X)-1]
 
 
-def test_():
+def test_optimize():
     np.random.seed(1)
     vocab_size, n_a = 27, 100
     a_prev = np.random.randn(n_a, 1)
@@ -285,3 +334,90 @@ def test_():
     print("gradients[\"db\"][4] =", gradients["db"][4])
     print("gradients[\"dby\"][1] =", gradients["dby"][1])
     print("a_last[4] =", a_last[4])
+
+
+#%% 3.2 - Training the model
+# GRADED FUNCTION: model
+
+def model(data, ix_to_char, char_to_ix, num_iterations = 35000, n_a = 50, dino_names = 7, vocab_size = 27):
+    """
+    Trains the model and generates dinosaur names.
+
+    Arguments:
+    data -- text corpus
+    ix_to_char -- dictionary that maps the index to a character
+    char_to_ix -- dictionary that maps a character to an index
+    num_iterations -- number of iterations to train the model for
+    n_a -- number of units of the RNN cell
+    dino_names -- number of dinosaur names you want to sample at each iteration.
+    vocab_size -- number of unique characters found in the text, size of the vocabulary
+
+    Returns:
+    parameters -- learned parameters
+    """
+
+    # Retrieve n_x and n_y from vocab_size
+    n_x, n_y = vocab_size, vocab_size
+
+    # Initialize parameters
+    parameters = initialize_parameters(n_a, n_x, n_y)
+
+    # Initialize loss (this is required because we want to smooth our loss, don't worry about it)
+    loss = get_initial_loss(vocab_size, dino_names)
+
+    # Build list of all dinosaur names (training examples).
+    with open("dinos.txt") as f:
+        examples = f.readlines()
+    examples = [x.lower().strip() for x in examples]
+
+    # Shuffle list of all dinosaur names
+    np.random.seed(0)
+    np.random.shuffle(examples)
+
+    # Initialize the hidden state of your LSTM
+    a_prev = np.zeros((n_a, 1))
+
+    # Optimization loop
+    for j in range(num_iterations):
+
+        ### START CODE HERE ###
+
+        # Use the hint above to define one training example (X,Y) (≈ 2 lines)
+        index = j % len(examples)
+        X = [None] + [char_to_ix[ch] for ch in examples[index]]
+        Y = X[1:] + [char_to_ix["\n"]]
+
+        # Perform one optimization step: Forward-prop -> Backward-prop -> Clip -> Update parameters
+        # Choose a learning rate of 0.01
+        curr_loss, gradients, a_prev = optimize(X, Y, a_prev, parameters, learning_rate = 0.01)
+
+        ### END CODE HERE ###
+
+        # Use a latency trick to keep the loss smooth. It happens here to accelerate the training.
+        loss = smooth(loss, curr_loss)
+
+        # Every 2000 Iteration, generate "n" characters thanks to sample() to check if the model is learning properly
+        if j % 2000 == 0:
+
+            print('Iteration: %d, Loss: %f' % (j, loss) + '\n')
+
+            # The number of dinosaur names to print
+            seed = 0
+            for name in range(dino_names):
+
+                # Sample indices and print them
+                sampled_indices = sample(parameters, char_to_ix, seed)
+                print_sample(sampled_indices, ix_to_char)
+
+                seed += 1  # To get the same result for grading purposed, increment the seed by one.
+
+            print('\n')
+
+    return parameters
+
+
+# data = open('dinos.txt', 'r').read()
+# data= data.lower()
+# chars = list(set(data))
+# data_size, vocab_size = len(data), len(chars)
+# parameters = model(data, ix_to_char, char_to_ix)
