@@ -1,3 +1,12 @@
+'''
+Improvise a Jazz Solo with an LSTM Network
+https://blog.csdn.net/Koala_Tree/article/details/79452180
+
+- A sequence model can be used to generate musical values, which are then post-processed into midi music.
+- Fairly similar models can be used to generate dinosaur names or to generate music, with the major difference being the input fed to the model.
+- In Keras, sequence generation involves defining layers with shared weights, which are then repeated for the different time steps 1,…,Tx1,…,Tx.
+'''
+
 from __future__ import print_function
 import IPython
 import sys

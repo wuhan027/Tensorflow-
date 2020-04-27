@@ -1,5 +1,9 @@
 #utf-8
-# https://blog.csdn.net/Koala_Tree/article/details/79451236
+'''
+Character level language model - Dinosaurus land
+https://blog.csdn.net/Koala_Tree/article/details/79451236
+
+'''
 
 import numpy as np
 

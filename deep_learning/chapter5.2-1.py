@@ -1,3 +1,6 @@
+'''
+https://blog.csdn.net/Koala_Tree/article/details/79454563
+'''
 import numpy as np
 from keras.models import Model
 from keras.layers import Input, Dense, Reshape, merge
