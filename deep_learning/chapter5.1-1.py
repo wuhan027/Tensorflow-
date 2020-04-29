@@ -7,9 +7,10 @@ https://blog.csdn.net/Koala_Tree/article/details/79451127
 
 import numpy as np
 
+
 def softmax(x):
-    e_x = np.exp(x - np.max(x))
-    return e_x / e_x.sum(axis=0)
+    e_x = np.exp(x-np.max(x))
+    return e_x/e_x.sum(axis=0)
 
 
 def sigmoid(x):
@@ -84,6 +85,9 @@ def update_parameters_with_adam(parameters, grads, v, s, t, learning_rate = 0.01
 
     # Perform Adam update on all parameters
     for l in range(L):
+        v['dW'+str(l+1)] = beta1*v['dW'+str(l+1)] + (1-beta1)*grads['dW'+str(l+1)]
+        v['db' + str(l + 1)] = beta1 * v['db' + str(l + 1)] + (1 - beta1) * grads['db' + str(l + 1)]
+        v_corrected
         # Moving average of the gradients. Inputs: "v, grads, beta1". Output: "v".
         ### START CODE HERE ### (approx. 2 lines)
         v["dW" + str(l+1)] = beta1 * v["dW" + str(l+1)] + (1 - beta1) * grads["dW" + str(l+1)]
@@ -155,6 +159,7 @@ def rnn_cell_forward(xt, a_prev, parameters):
     cache = (a_next, a_prev, xt, parameters)
 
     return a_next, yt_pred, cache
+
 
 np.random.seed(1)
 xt = np.random.randn(3,10)
