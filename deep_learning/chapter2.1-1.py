@@ -73,6 +73,7 @@ def compute_loss(a3, Y):
 
     return loss
 
+
 def forward_propagation(X, parameters):
     """
     Implements the forward propagation (and computes the loss) presented in Figure 2.
@@ -130,12 +131,12 @@ def backward_propagation(X, Y, cache):
 
     dz3 = 1./m * (a3 - Y)
     dW3 = np.dot(dz3, a2.T)
-    db3 = np.sum(dz3, axis=1, keepdims = True)
+    db3 = np.sum(dz3, axis=1, keepdims=True)
 
     da2 = np.dot(W3.T, dz3)
     dz2 = np.multiply(da2, np.int64(a2 > 0))
     dW2 = np.dot(dz2, a1.T)
-    db2 = np.sum(dz2, axis=1, keepdims = True)
+    db2 = np.sum(dz2, axis=1, keepdims=True)
 
     da1 = np.dot(W2.T, dz2)
     dz1 = np.multiply(da1, np.int64(a1 > 0))
